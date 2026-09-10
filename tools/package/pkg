@@ -118,10 +118,9 @@ def unpack( source, destination ):
         if os.path.isabs( securityPath ) or not contained:
             raise ValueError('Package member path escapes destination: %r' % path)
 
+        path = securityPath
         directory = os.path.dirname( path )
-        if not directory:
-            path = path.rstrip(b'\0')
-        elif not os.path.exists( directory ):
+        if directory and not os.path.exists( directory ):
             os.makedirs( directory )
             
         output = open( path, 'wb' )
