@@ -18,6 +18,9 @@ def readHeader( file ):
         PKG_HEADER_FORMAT, 
         file.read( struct.calcsize( PKG_HEADER_FORMAT ) ) 
     )
+    if header[:3] != (b'P', b'K', b'G'):
+        raise ValueError('Invalid package magic')
+
     version = header[3]
     
     size = struct.unpack(
