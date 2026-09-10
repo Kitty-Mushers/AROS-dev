@@ -22,6 +22,8 @@ def readHeader( file ):
         raise ValueError('Invalid package magic')
 
     version = header[3]
+    if version != PKG_VERSION:
+        raise ValueError('Unsupported package version: %d' % version)
     
     size = struct.unpack(
         PKG_FILE_DATALENGTH_FORMAT,
