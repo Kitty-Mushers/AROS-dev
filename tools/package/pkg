@@ -146,7 +146,7 @@ def pack( destination, files ):
     output = open( destination, 'wb' )
 
     oldwd = os.getcwd()
-    if os.path.isdir( files[0] ):
+    if files and os.path.isdir( files[0] ):
         os.chdir( files[0] )
         files = files[1:]
     
