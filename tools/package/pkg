@@ -104,88 +104,97 @@ def unpack( source, destination ):
     
     inputSize = os.path.getsize( source )
     input     = open( source, 'rb' )
-    
-    oldwd = os.getcwd()
     try:
-        os.chdir( destination )
-        destinationRoot = os.path.realpath( os.getcwdb() )
 
-        (version, packageSize) = readHeader( input )
-        packageEnd = min( packageSize, inputSize )
+        oldwd = os.getcwd()
+        try:
+            os.chdir( destination )
+            destinationRoot = os.path.realpath( os.getcwdb() )
 
-        while input.tell() < packageEnd:
-            (path, data) = readFile( input )
-            if input.tell() > packageEnd:
-                raise ValueError('Package member exceeds declared package size')
+            (version, packageSize) = readHeader( input )
+            packageEnd = min( packageSize, inputSize )
 
-            print('« %s (%d bytes)' % (path, len( data )))
+            while input.tell() < packageEnd:
+                (path, data) = readFile( input )
+                if input.tell() > packageEnd:
+                    raise ValueError('Package member exceeds declared package size')
 
-            securityPath = path.rstrip(b'\0')
-            target = os.path.realpath( os.path.abspath( securityPath ) )
-            try:
-                contained = os.path.commonpath((destinationRoot, target)) == destinationRoot
-            except ValueError:
-                contained = False
-            if os.path.isabs( securityPath ) or not contained:
-                raise ValueError('Package member path escapes destination: %r' % path)
+                print('« %s (%d bytes)' % (path, len( data )))
 
-            path = securityPath
-            directory = os.path.dirname( path )
-            if directory and not os.path.exists( directory ):
-                os.makedirs( directory )
+                securityPath = path.rstrip(b'\0')
+                target = os.path.realpath( os.path.abspath( securityPath ) )
+                try:
+                    contained = os.path.commonpath((destinationRoot, target)) == destinationRoot
+                except ValueError:
+                    contained = False
+                if os.path.isabs( securityPath ) or not contained:
+                    raise ValueError('Package member path escapes destination: %r' % path)
 
-            output = open( path, 'wb' )
-            output.write( data )
-            output.close()
+                path = securityPath
+                directory = os.path.dirname( path )
+                if directory and not os.path.exists( directory ):
+                    os.makedirs( directory )
 
+                output = open( path, 'wb' )
+                try:
+                    output.write( data )
+                finally:
+                    output.close()
+
+        finally:
+            os.chdir( oldwd )
     finally:
-        os.chdir( oldwd )
+        input.close()
     
 
 def pack( destination, files ):
     'pack( source, destination ) -> None'
     
     output = open( destination, 'wb' )
-
-    oldwd = os.getcwd()
     try:
-        if files and os.path.isdir( files[0] ):
-            os.chdir( files[0] )
-            files = files[1:]
 
-        if len(files) == 0:
-            outputStat = os.fstat( output.fileno() )
-            files = [path for path in listFiles()
-                     if not os.path.samestat( os.stat( path ), outputStat )]
+        oldwd = os.getcwd()
+        try:
+            if files and os.path.isdir( files[0] ):
+                os.chdir( files[0] )
+                files = files[1:]
 
-        writeHeader( output, PKG_VERSION )
+            if len(files) == 0:
+                outputStat = os.fstat( output.fileno() )
+                files = [path for path in listFiles()
+                         if not os.path.samestat( os.stat( path ), outputStat )]
 
-        for path in files:
-            print('» %s (%d bytes)' % (path, os.path.getsize( path )))
+            writeHeader( output, PKG_VERSION )
 
-            input = open( path, 'rb' )
-            # Record the name the file is known by, never the path it
-            # happened to be built at - an absolute path is a property of
-            # the build machine, not of the package.
-            name = os.path.basename( path ) if os.path.isabs( path ) else path
-            writeFile( output, name, input.read() )
-            input.close()
+            for path in files:
+                print('» %s (%d bytes)' % (path, os.path.getsize( path )))
+
+                input = open( path, 'rb' )
+                try:
+                    # Record the name the file is known by, never the path it
+                    # happened to be built at - an absolute path is a property of
+                    # the build machine, not of the package.
+                    name = os.path.basename( path ) if os.path.isabs( path ) else path
+                    writeFile( output, name, input.read() )
+                finally:
+                    input.close()
+
+        finally:
+            os.chdir( oldwd )
+
+        output.seek( struct.calcsize( PKG_HEADER_FORMAT ) )
+        st = os.fstat( output.fileno() )
+
+        output.write(
+            struct.pack(
+                PKG_FILE_DATALENGTH_FORMAT,
+                st[ST_SIZE]
+            )
+        )
+
 
     finally:
-        os.chdir( oldwd )
-    
-    output.seek( struct.calcsize( PKG_HEADER_FORMAT ) )
-    st = os.fstat( output.fileno() )
-    
-    output.write(
-        struct.pack(
-            PKG_FILE_DATALENGTH_FORMAT,
-            st[ST_SIZE]
-        )
-    )
-    
-    
-    output.close()
+        output.close()
     
     
 if __name__ == '__main__':
