@@ -68,6 +68,8 @@ def readFile( file ):
     )
     
     data = file.read( dataLength[0] )
+    if len( data ) != dataLength[0]:
+        raise ValueError('Truncated package member data')
     
     return (path, data)
     
