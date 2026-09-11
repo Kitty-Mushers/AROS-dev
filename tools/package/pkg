@@ -12,7 +12,7 @@ PKG_FILE_PATHLENGTH_FORMAT = '!I'
 PKG_FILE_DATALENGTH_FORMAT = '!I'
 
 def readHeader( file ):
-    'readHeader( file ) -> version'
+    'readHeader( file ) -> (version, size)'
     
     header = struct.unpack( 
         PKG_HEADER_FORMAT, 
@@ -28,9 +28,9 @@ def readHeader( file ):
     size = struct.unpack(
         PKG_FILE_DATALENGTH_FORMAT,
         file.read( struct.calcsize( PKG_FILE_DATALENGTH_FORMAT ) )
-    )
+    )[0]
     
-    return version
+    return (version, size)
     
 
 def writeHeader( file, version ):
@@ -107,10 +107,13 @@ def unpack( source, destination ):
     os.chdir( destination )
     destinationRoot = os.path.realpath( os.getcwdb() )
 
-    version = readHeader( input )
+    (version, packageSize) = readHeader( input )
+    packageEnd = min( packageSize, inputSize )
     
-    while input.tell() < inputSize:
+    while input.tell() < packageEnd:
         (path, data) = readFile( input )
+        if input.tell() > packageEnd:
+            raise ValueError('Package member exceeds declared package size')
         
         print('« %s (%d bytes)' % (path, len( data )))
         
