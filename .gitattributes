@@ -2,6 +2,13 @@
 #
 
 #
+# Source files
+#
+# Keep C/H line endings aligned with .astyle --lineend=linux.
+*.c                 text=auto eol=lf
+*.h                 text=auto eol=lf
+
+#
 # Localised files
 #
 # These languages traditionally use  ISO-8859-1 in AmigaOS
