@@ -27,6 +27,32 @@ void PrintID(uint32_t ID, uint8_t *Buffer);
  *  functions
  */
 
+/****i* examinedtdesc/main **************************************************
+*
+*   NAME
+*       main -- Examine a DataType descriptor.
+*
+*   FUNCTION
+*       Opens the named IFF file, verifies the DTYP form type and prints the
+*       descriptor fields recognized by examinedtdesc.
+*
+*   INPUTS
+*       argc - Command argument count supplied by the host C runtime.
+*       argv - Command argument vector supplied by the host C runtime.
+*
+*   RESULT
+*       EXIT_SUCCESS after a normally completed examination. EXIT_FAILURE for
+*       invalid arguments, an input that cannot be opened as IFF, a non-DTYP
+*       form, or a detected DTHD allocation/read failure.
+*
+*   NOTES
+*       This status contract reports errors already recognized by the existing
+*       implementation; it does not add new IFF validation rules.
+*
+****************************************************************************
+*
+*/
+
 int main(int argc, char **argv)
 {
  struct IFFHandle *IH;
@@ -34,12 +60,13 @@ int main(int argc, char **argv)
  long Size;
  uint8_t ID[5];
  int i;
+ int RetVal=EXIT_SUCCESS;
 
  if(!(argc==2))
  {
   fprintf(stderr, "usage: %s datatypedescriptor\n", argv[0]);
 
-  return(0);
+  return(EXIT_FAILURE);
  }
 
  IH=OpenIFF(argv[1]);
@@ -47,7 +74,7 @@ int main(int argc, char **argv)
  {
   fprintf(stderr, "Could not open %s\n", argv[1]);
 
-  return(0);
+  return(EXIT_FAILURE);
  }
 
  if(!(IH->IFFType==MAKE_ID('D','T','Y','P')))
@@ -55,7 +82,7 @@ int main(int argc, char **argv)
   fprintf(stderr, "This IFF is not a valid DataType-Descriptor\n");
 
   CloseIFF(IH);
-  return(0);
+  return(EXIT_FAILURE);
  }
 
  fprintf(stdout, "# DataTypeDescription for %s\n", argv[1]);
@@ -122,6 +149,7 @@ int main(int argc, char **argv)
     DTHDBuffer=malloc(IH->BytesLeftInChunk);
     if(!DTHDBuffer)
     {
+     RetVal=EXIT_FAILURE;
      goto TheEnd;
     }
 
@@ -129,6 +157,7 @@ int main(int argc, char **argv)
     if(!(ReadChunkData(IH, DTHDBuffer, IH->BytesLeftInChunk)==Size))
     {
      free((void *) DTHDBuffer);
+     RetVal=EXIT_FAILURE;
      goto TheEnd;
     }
 
@@ -255,8 +284,24 @@ TheEnd:
 
  CloseIFF(IH);
 
- return(0);
+ return(RetVal);
 }
+
+/****i* examinedtdesc/PrintID ***********************************************
+*
+*   NAME
+*       PrintID -- Convert a four-byte IFF identifier to a C string.
+*
+*   FUNCTION
+*       Stores the four bytes of ID in display order and appends a NUL byte.
+*
+*   INPUTS
+*       ID     - IFF identifier to convert.
+*       Buffer - Destination for at least five bytes; NULL is ignored.
+*
+****************************************************************************
+*
+*/
 
 void PrintID(uint32_t ID, uint8_t *Buffer)
 {
