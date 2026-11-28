@@ -383,16 +383,17 @@ int HandleGroupID(struct DTDesc *TheDTDesc)
 *       HandleID -- Store a DataType identifier of up to four characters.
 *
 *   FUNCTION
-*       Uses the first four bytes after ID= to construct dth_ID and pads a
-*       shorter non-empty identifier with zero bytes, matching AROS IDs such
-*       as ID_IFF. Additional bytes after the first four are ignored.
+*       Uses the first four bytes after ID= to construct dth_ID. Shorter
+*       identifiers are padded with zero bytes, including an empty field which
+*       represents ID zero as emitted by examinedtdesc. Additional bytes after
+*       the first four are ignored.
 *
 *   INPUTS
 *       TheDTDesc - Descriptor state whose ReadBuffer contains the input line.
 *
 *   RESULT
-*       TRUE when at least one data byte is present. FALSE when TheDTDesc is
-*       NULL or the field is empty.
+*       TRUE for any field value when TheDTDesc is valid. FALSE only when
+*       TheDTDesc is NULL.
 *
 ****************************************************************************
 *
@@ -412,11 +413,6 @@ int HandleID(struct DTDesc *TheDTDesc)
  TheDTDesc->ReadBuffer[READBUFFERSIZE-1]='\0';
 
  DataPtr=TheDTDesc->ReadBuffer+KeywordLength[ID];
-
- if(!DataPtr[0])
- {
-  return(FALSE);
- }
 
  for(i=0; (i<4) && DataPtr[i]; i++)
  {
