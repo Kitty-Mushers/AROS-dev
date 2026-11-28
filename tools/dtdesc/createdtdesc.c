@@ -709,9 +709,8 @@ void Work(struct DTDesc *TheDTDesc)
 *
 *   NOTES
 *       The mask words in TheDTDesc are byte-swapped in place when required.
-*       Post-open cleanup paths remove OutputName where they perform file
-*       removal. A DTCD data-write failure currently closes the file without
-*       removing the partial output.
+*       Detected output-write failures remove the invocation-owned OutputName.
+*       NewIFF() owns cleanup if its initial FORM header cannot be written.
 *
 ****************************************************************************
 *
@@ -916,6 +915,7 @@ int WriteOutDTD(struct DTDesc *TheDTDesc)
     free(DTCDdata);
     EndChunk(IH);
     CloseIFF(IH);
+    remove(TheDTDesc->OutputName);
     return(FALSE);
    }
    free(DTCDdata);

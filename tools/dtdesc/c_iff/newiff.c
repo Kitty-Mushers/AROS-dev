@@ -35,12 +35,15 @@
 *       IFFType     - Type of the IFF (offset 8)
 *
 *   RESULT
-*       TheHandle   - IFFHandle to write to
+*       TheHandle   - IFFHandle to write to, or NULL if handle allocation,
+*                     file creation, or the initial IFF-header write fails.
 *
 *   EXAMPLE
 *
 *   NOTES
 *       IFF-files created with NewIFF() must be closed with CloseIFF() .
+*       If the initial IFF-header write fails after file creation, NewIFF()
+*       removes the partial output file.
 *
 *   BUGS
 *
@@ -93,6 +96,7 @@ struct IFFHandle *NewIFF(char *Name, uint32_t IFFType)
  if(!(fwrite((void *) Buffer, sizeof(uint32_t), 3, Ret->TheFile)==3))
  {
   fclose(Ret->TheFile);
+  remove(Name);
   free((void *) Ret);
   return(NULL);
  }
