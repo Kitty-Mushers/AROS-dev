@@ -21,6 +21,7 @@
  */
 
 #define READBUFFERSIZE (256)
+#define DTDESC_HELP    (2)
 
 /*
  *  structs
@@ -50,7 +51,7 @@ struct DTDesc
 
 int main(int argc, char **argv);
 int Init(int argc, char **argv, struct DTDesc **TheDTDesc);
-void Work(struct DTDesc *TheDTDesc);
+int Work(struct DTDesc *TheDTDesc);
 void Cleanup(struct DTDesc *TheDTDesc);
 
 void Usage(char *ProgName);

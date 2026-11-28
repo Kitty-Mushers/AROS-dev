@@ -13,20 +13,16 @@
 *       main -- Run the DataType descriptor creator.
 *
 *   FUNCTION
-*       Initializes descriptor state from the command line, parses the input and
-*       requests descriptor output when initialization succeeds, then releases
-*       the descriptor state.
+*       Initializes descriptor state from the command line, processes the input
+*       and descriptor output, then releases the descriptor state.
 *
 *   INPUTS
 *       argc - Command argument count supplied by the host C runtime.
 *       argv - Command argument vector supplied by the host C runtime.
 *
 *   RESULT
-*       0.
-*
-*   NOTES
-*       Initialization and descriptor-write failures are not propagated through
-*       the process return value by the current implementation.
+*       EXIT_SUCCESS when initialization, input handling and descriptor output
+*       succeed, or when -h requests usage. EXIT_FAILURE otherwise.
 *
 ****************************************************************************
 *
@@ -35,15 +31,25 @@
 int main(int argc, char **argv)
 {
  struct DTDesc *TheDTDesc;
+ int InitResult;
+ int RetVal=EXIT_FAILURE;
 
- if(Init(argc, argv, &TheDTDesc))
+ InitResult=Init(argc, argv, &TheDTDesc);
+ if(InitResult==TRUE)
  {
-  Work(TheDTDesc);
+  if(Work(TheDTDesc))
+  {
+   RetVal=EXIT_SUCCESS;
+  }
+ }
+ else if(InitResult==DTDESC_HELP)
+ {
+  RetVal=EXIT_SUCCESS;
  }
 
  Cleanup(TheDTDesc);
 
- return(0);
+ return(RetVal);
 }
 
 /****i* createdtdesc/HandleName *********************************************
@@ -664,25 +670,31 @@ int RemoveNewLine(struct DTDesc *TheDTDesc)
 *   FUNCTION
 *       Reads lines into ReadBuffer, removes the trailing newline, and dispatches
 *       each line until end of input or a field handler fails. WriteOutDTD() is
-*       then called once.
+*       then called once, including after a handler failure.
 *
 *   INPUTS
 *       TheDTDesc - Initialized descriptor state and input stream.
 *
+*   RESULT
+*       TRUE when all dispatched lines and WriteOutDTD() succeed; FALSE when the
+*       descriptor state is invalid, a field handler fails, or output fails.
+*
 *   NOTES
-*       The return values from RemoveNewLine() and WriteOutDTD() are not
-*       propagated by this void function.
+*       Descriptor output is still attempted after a field-handler failure; this
+*       function reports that earlier failure to its caller without changing the
+*       existing output attempt.
 *
 ****************************************************************************
 *
 */
 
-void Work(struct DTDesc *TheDTDesc)
+int Work(struct DTDesc *TheDTDesc)
 {
+ int RetVal=TRUE;
 
  if(!TheDTDesc)
  {
-  return;
+  return(FALSE);
  }
 
  memset(TheDTDesc->ReadBuffer, '\0', READBUFFERSIZE);
@@ -693,13 +705,19 @@ void Work(struct DTDesc *TheDTDesc)
 
   if(!HandleLine(TheDTDesc))
   {
+   RetVal=FALSE;
    break;
   }
 
   memset(TheDTDesc->ReadBuffer, '\0', READBUFFERSIZE);
  }
 
- WriteOutDTD(TheDTDesc);
+ if(!WriteOutDTD(TheDTDesc))
+ {
+  RetVal=FALSE;
+ }
+
+ return(RetVal);
 
 }
 
@@ -949,7 +967,7 @@ int WriteOutDTD(struct DTDesc *TheDTDesc)
 *   FUNCTION
 *       Allocates a zeroed DTDesc, records the program name, selects stdin and
 *       the Name buffer as the initial input and output choices, parses command
-*       arguments, and opens the selected input file.
+*       arguments, and opens the selected input file unless help was requested.
 *
 *   INPUTS
 *       argc      - Command argument count.
@@ -957,8 +975,9 @@ int WriteOutDTD(struct DTDesc *TheDTDesc)
 *       TheDTDesc - Receives the allocated descriptor state; must not be NULL.
 *
 *   RESULT
-*       TRUE when argument parsing and input opening succeed; FALSE otherwise.
-*       After allocation, *TheDTDesc remains available for Cleanup() on failure.
+*       TRUE when argument parsing and input opening succeed; DTDESC_HELP when
+*       ParseArgs() handled -h; FALSE on initialization failure. After allocation,
+*       *TheDTDesc remains available for Cleanup().
 *
 ****************************************************************************
 *
@@ -967,6 +986,7 @@ int WriteOutDTD(struct DTDesc *TheDTDesc)
 int Init(int argc, char **argv, struct DTDesc **TheDTDesc)
 {
  struct DTDesc *NewDTDesc;
+ int RetVal;
 
  if(!(argv && TheDTDesc))
  {
@@ -989,9 +1009,10 @@ int Init(int argc, char **argv, struct DTDesc **TheDTDesc)
  NewDTDesc->Input=stdin;
  NewDTDesc->OutputName=NewDTDesc->Name;
 
- if(!ParseArgs(argc, argv, NewDTDesc))
+ RetVal=ParseArgs(argc, argv, NewDTDesc);
+ if(RetVal!=TRUE)
  {
-  return(FALSE);
+  return(RetVal);
  }
 
  if(!OpenInput(NewDTDesc))
@@ -1061,8 +1082,8 @@ int OpenInput(struct DTDesc *TheDTDesc)
 *       TheDTDesc - Descriptor state to update; must not be NULL.
 *
 *   RESULT
-*       TRUE after parsing; FALSE for invalid pointers, a missing -o/-m value,
-*       or -h.
+*       TRUE after normal parsing; DTDESC_HELP after displaying usage for -h;
+*       FALSE for invalid pointers or a missing -o/-m value.
 *
 ****************************************************************************
 *
@@ -1104,7 +1125,7 @@ int ParseArgs(int argc, char **argv, struct DTDesc *TheDTDesc)
   {
    Usage(TheDTDesc->ProgName);
 
-   return(FALSE);
+   return(DTDESC_HELP);
   }
   else
   {
