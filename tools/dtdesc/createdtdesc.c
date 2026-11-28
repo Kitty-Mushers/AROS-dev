@@ -371,17 +371,19 @@ int HandleGroupID(struct DTDesc *TheDTDesc)
 /****i* createdtdesc/HandleID ***********************************************
 *
 *   NAME
-*       HandleID -- Store a four-character DataType identifier.
+*       HandleID -- Store a DataType identifier of up to four characters.
 *
 *   FUNCTION
-*       Uses the first four bytes after ID= to construct dth_ID.
+*       Uses the first four bytes after ID= to construct dth_ID and pads a
+*       shorter non-empty identifier with zero bytes, matching AROS IDs such
+*       as ID_IFF. Additional bytes after the first four are ignored.
 *
 *   INPUTS
 *       TheDTDesc - Descriptor state whose ReadBuffer contains the input line.
 *
 *   RESULT
-*       TRUE when at least four data bytes are present. FALSE when TheDTDesc is
-*       NULL or the field contains fewer than four bytes.
+*       TRUE when at least one data byte is present. FALSE when TheDTDesc is
+*       NULL or the field is empty.
 *
 ****************************************************************************
 *
@@ -389,7 +391,9 @@ int HandleGroupID(struct DTDesc *TheDTDesc)
 
 int HandleID(struct DTDesc *TheDTDesc)
 {
- uint8_t *DataPtr;
+ const uint8_t *DataPtr;
+ uint8_t IDBytes[4] = { 0, 0, 0, 0 };
+ int i;
 
  if(!TheDTDesc)
  {
@@ -400,12 +404,17 @@ int HandleID(struct DTDesc *TheDTDesc)
 
  DataPtr=TheDTDesc->ReadBuffer+KeywordLength[ID];
 
- if(strlen(DataPtr)<4)
+ if(!DataPtr[0])
  {
   return(FALSE);
  }
 
- TheDTDesc->DTH.dth_ID=MAKE_ID(DataPtr[0], DataPtr[1], DataPtr[2], DataPtr[3]);
+ for(i=0; (i<4) && DataPtr[i]; i++)
+ {
+  IDBytes[i]=DataPtr[i];
+ }
+
+ TheDTDesc->DTH.dth_ID=MAKE_ID(IDBytes[0], IDBytes[1], IDBytes[2], IDBytes[3]);
 
  return(TRUE);
 }
