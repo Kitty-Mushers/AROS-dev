@@ -7,6 +7,31 @@
 #include "createdtdesc.h"
 #include "parser.h"
 
+/****i* createdtdesc/main ***************************************************
+*
+*   NAME
+*       main -- Run the DataType descriptor creator.
+*
+*   FUNCTION
+*       Initializes descriptor state from the command line, parses the input and
+*       requests descriptor output when initialization succeeds, then releases
+*       the descriptor state.
+*
+*   INPUTS
+*       argc - Command argument count supplied by the host C runtime.
+*       argv - Command argument vector supplied by the host C runtime.
+*
+*   RESULT
+*       0.
+*
+*   NOTES
+*       Initialization and descriptor-write failures are not propagated through
+*       the process return value by the current implementation.
+*
+****************************************************************************
+*
+*/
+
 int main(int argc, char **argv)
 {
  struct DTDesc *TheDTDesc;
@@ -20,6 +45,25 @@ int main(int argc, char **argv)
 
  return(0);
 }
+
+/****i* createdtdesc/HandleName *********************************************
+*
+*   NAME
+*       HandleName -- Store the Name field from the current input line.
+*
+*   FUNCTION
+*       Copies the data after Name= into the descriptor Name buffer and makes
+*       that buffer the dth_Name string.
+*
+*   INPUTS
+*       TheDTDesc - Descriptor state whose ReadBuffer contains the input line.
+*
+*   RESULT
+*       TRUE on success; FALSE when TheDTDesc is NULL.
+*
+****************************************************************************
+*
+*/
 
 int HandleName(struct DTDesc *TheDTDesc)
 {
@@ -45,6 +89,24 @@ int HandleName(struct DTDesc *TheDTDesc)
  return(TRUE);
 }
 
+/****i* createdtdesc/HandleVersion ******************************************
+*
+*   NAME
+*       HandleVersion -- Store the Version field from the current input line.
+*
+*   FUNCTION
+*       Copies the data after Version= into the descriptor Version buffer.
+*
+*   INPUTS
+*       TheDTDesc - Descriptor state whose ReadBuffer contains the input line.
+*
+*   RESULT
+*       TRUE on success; FALSE when TheDTDesc is NULL.
+*
+****************************************************************************
+*
+*/
+
 int HandleVersion(struct DTDesc *TheDTDesc)
 {
  uint8_t *DataPtr;
@@ -66,6 +128,25 @@ int HandleVersion(struct DTDesc *TheDTDesc)
 
  return(TRUE);
 }
+
+/****i* createdtdesc/HandleBaseName *****************************************
+*
+*   NAME
+*       HandleBaseName -- Store the BaseName field from the current input line.
+*
+*   FUNCTION
+*       Copies the data after BaseName= into the descriptor BaseName buffer and
+*       makes that buffer the dth_BaseName string.
+*
+*   INPUTS
+*       TheDTDesc - Descriptor state whose ReadBuffer contains the input line.
+*
+*   RESULT
+*       TRUE on success; FALSE when TheDTDesc is NULL.
+*
+****************************************************************************
+*
+*/
 
 int HandleBaseName(struct DTDesc *TheDTDesc)
 {
@@ -91,6 +172,25 @@ int HandleBaseName(struct DTDesc *TheDTDesc)
  return(TRUE);
 }
 
+/****i* createdtdesc/HandlePattern ******************************************
+*
+*   NAME
+*       HandlePattern -- Store the Pattern field from the current input line.
+*
+*   FUNCTION
+*       Copies the data after Pattern= into the descriptor Pattern buffer and
+*       makes that buffer the dth_Pattern string.
+*
+*   INPUTS
+*       TheDTDesc - Descriptor state whose ReadBuffer contains the input line.
+*
+*   RESULT
+*       TRUE on success; FALSE when TheDTDesc is NULL.
+*
+****************************************************************************
+*
+*/
+
 int HandlePattern(struct DTDesc *TheDTDesc)
 {
  uint8_t *DataPtr;
@@ -114,6 +214,29 @@ int HandlePattern(struct DTDesc *TheDTDesc)
 
  return(TRUE);
 }
+
+/****i* createdtdesc/HandleMask *********************************************
+*
+*   NAME
+*       HandleMask -- Parse the recognition mask from the current input line.
+*
+*   FUNCTION
+*       Parses quoted characters, ANY wildcards, and numeric values after
+*       Mask=. Whitespace is skipped. Parsed values are appended to the Mask
+*       buffer and dth_MaskLen is updated; dth_Mask is then set to that buffer.
+*
+*   INPUTS
+*       TheDTDesc - Descriptor state whose ReadBuffer contains the input line.
+*
+*   RESULT
+*       TRUE on success; FALSE when TheDTDesc is NULL.
+*
+*   NOTES
+*       Unrecognized mask text is skipped rather than reported as an error.
+*
+****************************************************************************
+*
+*/
 
 int HandleMask(struct DTDesc *TheDTDesc)
 {
@@ -203,6 +326,25 @@ int HandleMask(struct DTDesc *TheDTDesc)
  return(TRUE);
 }
 
+/****i* createdtdesc/HandleGroupID ******************************************
+*
+*   NAME
+*       HandleGroupID -- Store a four-character DataType group identifier.
+*
+*   FUNCTION
+*       Uses the first four bytes after GroupID= to construct dth_GroupID.
+*
+*   INPUTS
+*       TheDTDesc - Descriptor state whose ReadBuffer contains the input line.
+*
+*   RESULT
+*       TRUE when at least four data bytes are present. FALSE when TheDTDesc is
+*       NULL or the field contains fewer than four bytes.
+*
+****************************************************************************
+*
+*/
+
 int HandleGroupID(struct DTDesc *TheDTDesc)
 {
  uint8_t *DataPtr;
@@ -226,6 +368,25 @@ int HandleGroupID(struct DTDesc *TheDTDesc)
  return(TRUE);
 }
 
+/****i* createdtdesc/HandleID ***********************************************
+*
+*   NAME
+*       HandleID -- Store a four-character DataType identifier.
+*
+*   FUNCTION
+*       Uses the first four bytes after ID= to construct dth_ID.
+*
+*   INPUTS
+*       TheDTDesc - Descriptor state whose ReadBuffer contains the input line.
+*
+*   RESULT
+*       TRUE when at least four data bytes are present. FALSE when TheDTDesc is
+*       NULL or the field contains fewer than four bytes.
+*
+****************************************************************************
+*
+*/
+
 int HandleID(struct DTDesc *TheDTDesc)
 {
  uint8_t *DataPtr;
@@ -248,6 +409,26 @@ int HandleID(struct DTDesc *TheDTDesc)
 
  return(TRUE);
 }
+
+/****i* createdtdesc/HandleFlags ********************************************
+*
+*   NAME
+*       HandleFlags -- Parse supported DataType flags from the current line.
+*
+*   FUNCTION
+*       Clears dth_Flags, scans the data after Flags= for the supported flag
+*       names, and ORs the corresponding values into dth_Flags. Other text is
+*       skipped.
+*
+*   INPUTS
+*       TheDTDesc - Descriptor state whose ReadBuffer contains the input line.
+*
+*   RESULT
+*       TRUE on success; FALSE when TheDTDesc is NULL.
+*
+****************************************************************************
+*
+*/
 
 int HandleFlags(struct DTDesc *TheDTDesc)
 {
@@ -331,6 +512,28 @@ int HandleFlags(struct DTDesc *TheDTDesc)
  return(TRUE);
 }
 
+/****i* createdtdesc/HandlePriority *****************************************
+*
+*   NAME
+*       HandlePriority -- Store the decimal DataType priority.
+*
+*   FUNCTION
+*       Parses the data after Priority= with strtoul() in base 10 and stores
+*       the result in the 16-bit dth_Priority field.
+*
+*   INPUTS
+*       TheDTDesc - Descriptor state whose ReadBuffer contains the input line.
+*
+*   RESULT
+*       TRUE on success; FALSE when TheDTDesc is NULL.
+*
+*   NOTES
+*       The parsed value is not range-validated before conversion to uint16_t.
+*
+****************************************************************************
+*
+*/
+
 int HandlePriority(struct DTDesc *TheDTDesc)
 {
  uint8_t *DataPtr;
@@ -351,6 +554,27 @@ int HandlePriority(struct DTDesc *TheDTDesc)
 
  return(TRUE);
 }
+
+/****i* createdtdesc/HandleLine *********************************************
+*
+*   NAME
+*       HandleLine -- Dispatch one DataTypeDescription input line.
+*
+*   FUNCTION
+*       Compares ReadBuffer with the known Keyword= prefixes and calls the
+*       corresponding field handler for the first match. Lines with no known
+*       prefix are ignored.
+*
+*   INPUTS
+*       TheDTDesc - Descriptor state containing the current input line.
+*
+*   RESULT
+*       The matched handler result, TRUE when no keyword matched, or FALSE when
+*       TheDTDesc is NULL.
+*
+****************************************************************************
+*
+*/
 
 int HandleLine(struct DTDesc *TheDTDesc)
 {
@@ -377,6 +601,28 @@ int HandleLine(struct DTDesc *TheDTDesc)
  return(RetVal);
 }
 
+/****i* createdtdesc/RemoveNewLine ******************************************
+*
+*   NAME
+*       RemoveNewLine -- Remove the trailing newline from an input line.
+*
+*   FUNCTION
+*       Replaces a final '\n' in ReadBuffer with a NUL character.
+*
+*   INPUTS
+*       TheDTDesc - Descriptor state containing a NUL-terminated line read by
+*                   Work().
+*
+*   RESULT
+*       TRUE after processing; FALSE when TheDTDesc is NULL.
+*
+*   NOTES
+*       A carriage return is not removed.
+*
+****************************************************************************
+*
+*/
+
 int RemoveNewLine(struct DTDesc *TheDTDesc)
 {
  int Len;
@@ -395,6 +641,27 @@ int RemoveNewLine(struct DTDesc *TheDTDesc)
 
  return(TRUE);
 }
+
+/****i* createdtdesc/Work ***************************************************
+*
+*   NAME
+*       Work -- Parse the input stream and request descriptor output.
+*
+*   FUNCTION
+*       Reads lines into ReadBuffer, removes the trailing newline, and dispatches
+*       each line until end of input or a field handler fails. WriteOutDTD() is
+*       then called once.
+*
+*   INPUTS
+*       TheDTDesc - Initialized descriptor state and input stream.
+*
+*   NOTES
+*       The return values from RemoveNewLine() and WriteOutDTD() are not
+*       propagated by this void function.
+*
+****************************************************************************
+*
+*/
 
 void Work(struct DTDesc *TheDTDesc)
 {
@@ -421,6 +688,34 @@ void Work(struct DTDesc *TheDTDesc)
  WriteOutDTD(TheDTDesc);
 
 }
+
+/****i* createdtdesc/WriteOutDTD ********************************************
+*
+*   NAME
+*       WriteOutDTD -- Write the parsed descriptor as an IFF FORM DTYP file.
+*
+*   FUNCTION
+*       Requires non-empty Name and BaseName fields, supplies #? when Pattern is
+*       empty, and writes NAME, optional FVER, DTHD, and optional DTCD chunks to
+*       OutputName. DTHD numeric fields and mask words are converted to the file
+*       byte order used by the descriptor.
+*
+*   INPUTS
+*       TheDTDesc - Parsed descriptor state and output pathname.
+*
+*   RESULT
+*       TRUE when the descriptor is written; FALSE on validation, open, chunk,
+*       or data-write failure.
+*
+*   NOTES
+*       The mask words in TheDTDesc are byte-swapped in place when required.
+*       Post-open cleanup paths remove OutputName where they perform file
+*       removal. A DTCD data-write failure currently closes the file without
+*       removing the partial output.
+*
+****************************************************************************
+*
+*/
 
 int WriteOutDTD(struct DTDesc *TheDTDesc)
 {
@@ -466,7 +761,7 @@ int WriteOutDTD(struct DTDesc *TheDTDesc)
  if(!NewChunk(IH, MAKE_ID('N','A','M','E')))
  {
   CloseIFF(IH);
-  remove(TheDTDesc->Name);
+  remove(TheDTDesc->OutputName);
   return(FALSE);
  }
 
@@ -474,7 +769,7 @@ int WriteOutDTD(struct DTDesc *TheDTDesc)
  {
   EndChunk(IH);
   CloseIFF(IH);
-  remove(TheDTDesc->Name);
+  remove(TheDTDesc->OutputName);
   return(FALSE);
  }
 
@@ -485,7 +780,7 @@ int WriteOutDTD(struct DTDesc *TheDTDesc)
   if(!NewChunk(IH, MAKE_ID('F','V','E','R')))
   {
    CloseIFF(IH);
-   remove(TheDTDesc->Name);
+   remove(TheDTDesc->OutputName);
    return(FALSE);
   }
 
@@ -493,7 +788,7 @@ int WriteOutDTD(struct DTDesc *TheDTDesc)
   {
    EndChunk(IH);
    CloseIFF(IH);
-   remove(TheDTDesc->Name);
+   remove(TheDTDesc->OutputName);
    return(FALSE);
   }
 
@@ -503,7 +798,7 @@ int WriteOutDTD(struct DTDesc *TheDTDesc)
  if(!NewChunk(IH, MAKE_ID('D','T','H','D')))
  {
   CloseIFF(IH);
-  remove(TheDTDesc->Name);
+  remove(TheDTDesc->OutputName);
   return(FALSE);
  }
 
@@ -543,7 +838,7 @@ int WriteOutDTD(struct DTDesc *TheDTDesc)
  {
   EndChunk(IH);
   CloseIFF(IH);
-  remove(TheDTDesc->Name);
+  remove(TheDTDesc->OutputName);
   return(FALSE);
  }
 
@@ -558,7 +853,7 @@ int WriteOutDTD(struct DTDesc *TheDTDesc)
   {
    EndChunk(IH);
    CloseIFF(IH);
-   remove(TheDTDesc->Name);
+   remove(TheDTDesc->OutputName);
    return(FALSE);
   }
  }
@@ -567,7 +862,7 @@ int WriteOutDTD(struct DTDesc *TheDTDesc)
  {
   EndChunk(IH);
   CloseIFF(IH);
-  remove(TheDTDesc->Name);
+  remove(TheDTDesc->OutputName);
   return(FALSE);
  }
 
@@ -575,7 +870,7 @@ int WriteOutDTD(struct DTDesc *TheDTDesc)
  {
   EndChunk(IH);
   CloseIFF(IH);
-  remove(TheDTDesc->Name);
+  remove(TheDTDesc->OutputName);
   return(FALSE);
  }
 
@@ -583,7 +878,7 @@ int WriteOutDTD(struct DTDesc *TheDTDesc)
  {
   EndChunk(IH);
   CloseIFF(IH);
-  remove(TheDTDesc->Name);
+  remove(TheDTDesc->OutputName);
   return(FALSE);
  }
  
@@ -612,7 +907,7 @@ int WriteOutDTD(struct DTDesc *TheDTDesc)
    if(!NewChunk(IH, MAKE_ID('D','T','C','D')))
    {
     CloseIFF(IH);
-    remove(TheDTDesc->Name);
+    remove(TheDTDesc->OutputName);
     return(FALSE);
    }
 
@@ -631,6 +926,29 @@ int WriteOutDTD(struct DTDesc *TheDTDesc)
 
  return(TRUE);
 }
+
+/****i* createdtdesc/Init ***************************************************
+*
+*   NAME
+*       Init -- Allocate and initialize descriptor-creator state.
+*
+*   FUNCTION
+*       Allocates a zeroed DTDesc, records the program name, selects stdin and
+*       the Name buffer as the initial input and output choices, parses command
+*       arguments, and opens the selected input file.
+*
+*   INPUTS
+*       argc      - Command argument count.
+*       argv      - Command argument vector; must not be NULL.
+*       TheDTDesc - Receives the allocated descriptor state; must not be NULL.
+*
+*   RESULT
+*       TRUE when argument parsing and input opening succeed; FALSE otherwise.
+*       After allocation, *TheDTDesc remains available for Cleanup() on failure.
+*
+****************************************************************************
+*
+*/
 
 int Init(int argc, char **argv, struct DTDesc **TheDTDesc)
 {
@@ -670,6 +988,27 @@ int Init(int argc, char **argv, struct DTDesc **TheDTDesc)
  return(TRUE);
 }
 
+/****i* createdtdesc/OpenInput **********************************************
+*
+*   NAME
+*       OpenInput -- Open the selected DataTypeDescription input file.
+*
+*   FUNCTION
+*       Opens InputName for text input when a name was supplied. If no input
+*       name was supplied, the existing stdin selection is retained.
+*
+*   INPUTS
+*       TheDTDesc - Descriptor state containing InputName and Input.
+*
+*   RESULT
+*       TRUE when no file is required or the file opens successfully. FALSE for
+*       a NULL state or a failed fopen(); after an open failure Input is reset
+*       to stdin.
+*
+****************************************************************************
+*
+*/
+
 int OpenInput(struct DTDesc *TheDTDesc)
 {
 
@@ -691,6 +1030,29 @@ int OpenInput(struct DTDesc *TheDTDesc)
 
  return(TRUE);
 }
+
+/****i* createdtdesc/ParseArgs **********************************************
+*
+*   NAME
+*       ParseArgs -- Parse createdtdesc command-line arguments.
+*
+*   FUNCTION
+*       Processes -o and -m option arguments, displays usage for -h, and stores
+*       other arguments as InputName. A later non-option argument replaces an
+*       earlier InputName.
+*
+*   INPUTS
+*       argc      - Command argument count.
+*       argv      - Command argument vector; must not be NULL.
+*       TheDTDesc - Descriptor state to update; must not be NULL.
+*
+*   RESULT
+*       TRUE after parsing; FALSE for invalid pointers, a missing -o/-m value,
+*       or -h.
+*
+****************************************************************************
+*
+*/
 
 int ParseArgs(int argc, char **argv, struct DTDesc *TheDTDesc)
 {
@@ -739,6 +1101,22 @@ int ParseArgs(int argc, char **argv, struct DTDesc *TheDTDesc)
  return(TRUE);
 }
 
+/****i* createdtdesc/Usage **************************************************
+*
+*   NAME
+*       Usage -- Print the createdtdesc command syntax.
+*
+*   FUNCTION
+*       Writes the usage line to stderr, using the supplied program name or
+*       createdtdesc when ProgName is NULL.
+*
+*   INPUTS
+*       ProgName - Program name to display, or NULL for the default name.
+*
+****************************************************************************
+*
+*/
+
 void Usage(char *ProgName)
 {
  char DefaultName[]="createdtdesc";
@@ -751,6 +1129,22 @@ void Usage(char *ProgName)
                  "\n",
         NamePtr);
 }
+
+/****i* createdtdesc/Cleanup ************************************************
+*
+*   NAME
+*       Cleanup -- Release descriptor-creator state.
+*
+*   FUNCTION
+*       Closes an input stream owned by the descriptor state when it is not
+*       stdin, then frees the DTDesc allocation.
+*
+*   INPUTS
+*       TheDTDesc - Descriptor state to release; NULL is accepted.
+*
+****************************************************************************
+*
+*/
 
 void Cleanup(struct DTDesc *TheDTDesc)
 {
