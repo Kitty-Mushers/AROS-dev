@@ -129,8 +129,7 @@ static IPTR thunk_commodities_ActivateCxObj(struct M68KEmuContext *ctx, void *cp
 {
     APTR arg_co = THUNK_PTR(0);
     ULONG arg_actv = THUNK_D(0);
-    ActivateCxObj(arg_co, arg_actv);
-    return 0;
+    return (IPTR)ActivateCxObj(arg_co, arg_actv);
 }
 
 /* -48: DeleteCxObj(co=a0) */
@@ -176,8 +175,7 @@ static IPTR thunk_commodities_SetCxObjPri(struct M68KEmuContext *ctx, void *cpu)
 {
     APTR arg_co = THUNK_PTR(0);
     ULONG arg_pri = THUNK_D(0);
-    SetCxObjPri(arg_co, arg_pri);
-    return 0;
+    return (IPTR)SetCxObjPri(arg_co, arg_pri);
 }
 
 /* -84: AttachCxObj(headObj=a0, co=a1) */
