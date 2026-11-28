@@ -329,17 +329,20 @@ int HandleMask(struct DTDesc *TheDTDesc)
 /****i* createdtdesc/HandleGroupID ******************************************
 *
 *   NAME
-*       HandleGroupID -- Store a four-character DataType group identifier.
+*       HandleGroupID -- Store a DataType group identifier.
 *
 *   FUNCTION
-*       Uses the first four bytes after GroupID= to construct dth_GroupID.
+*       Uses the first four bytes after GroupID= to construct dth_GroupID. An
+*       empty field explicitly selects group ID zero; non-empty group IDs must
+*       contain at least four bytes.
 *
 *   INPUTS
 *       TheDTDesc - Descriptor state whose ReadBuffer contains the input line.
 *
 *   RESULT
-*       TRUE when at least four data bytes are present. FALSE when TheDTDesc is
-*       NULL or the field contains fewer than four bytes.
+*       TRUE for an empty field or when at least four data bytes are present.
+*       FALSE when TheDTDesc is NULL or a non-empty field is shorter than four
+*       bytes.
 *
 ****************************************************************************
 *
@@ -347,7 +350,7 @@ int HandleMask(struct DTDesc *TheDTDesc)
 
 int HandleGroupID(struct DTDesc *TheDTDesc)
 {
- uint8_t *DataPtr;
+ const uint8_t *DataPtr;
 
  if(!TheDTDesc)
  {
@@ -358,7 +361,13 @@ int HandleGroupID(struct DTDesc *TheDTDesc)
 
  DataPtr=TheDTDesc->ReadBuffer+KeywordLength[GroupID];
 
- if(strlen(DataPtr)<4)
+ if(!DataPtr[0])
+ {
+  TheDTDesc->DTH.dth_GroupID=0;
+  return(TRUE);
+ }
+
+ if(!(DataPtr[1] && DataPtr[2] && DataPtr[3]))
  {
   return(FALSE);
  }
