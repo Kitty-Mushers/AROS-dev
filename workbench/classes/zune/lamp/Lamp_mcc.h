@@ -52,4 +52,12 @@ struct MUIP_Lamp_SetRGB                 {STACKED ULONG methodid; STACKED ULONG r
 #define MUIV_Lamp_Color_LoadingData     10
 #define MUIV_Lamp_Color_SavingData      11
 
+/* AROS-only presentation attributes; original Lamp IDs are unchanged. */
+#define MUIB_Lamp_AROS                   (MUIB_AROS | 0x00000D00UL)
+#define MUIA_Lamp_Style                 (MUIB_Lamp_AROS | 0x01) /* [ISG] ULONG */
+#define MUIA_Lamp_Diameter              (MUIB_Lamp_AROS | 0x02) /* [ISG] ULONG */
+#define MUIA_Lamp_Intensity             (MUIB_Lamp_AROS | 0x03) /* [ISG] ULONG */
+#define MUIV_Lamp_Style_Flat            0
+#define MUIV_Lamp_Style_LED             1
+
 #endif /* LAMP_MCC_H */
